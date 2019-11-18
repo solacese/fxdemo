@@ -164,7 +164,7 @@ public class FX {
                             sell = price + (price * buySellSpreadPct);
 
                             // (7) Create the JSON element from the symbol, price and the up/down direction
-                            payload.append(createTradeUpdateElement(symbol, buy, sell));
+                            payload.append(createTradeUpdateElement(symbol, buy, sell, directionString));
 
                             // This version only apply random changes against a fixed starting price,
                             // it does not demonstrate subsequent price changes yet.
@@ -194,7 +194,7 @@ public class FX {
 
         }
 
-        String createTradeUpdateElement(String symbol, double buy, double sell) {
+        String createTradeUpdateElement(String symbol, double buy, double sell, String directionString) {
 
             StringBuffer el = new StringBuffer();
 
@@ -203,7 +203,8 @@ public class FX {
             el.append("{");
             el.append("\"symbol\": \"").append(symbol).append("\", ");
             el.append("\"buying\": ").append(df_3dec.format(buy)).append(", ");
-            el.append("\"selling\": ").append(df_3dec.format(sell));
+            el.append("\"selling\": ").append(df_3dec.format(buy)).append(", ");
+            el.append("\"direction\": \"").append(directionString).append("\"");
             el.append("}");
 
             return el.toString();

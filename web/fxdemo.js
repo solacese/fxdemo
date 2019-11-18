@@ -77,17 +77,22 @@ function onMessageArrived(message) {
 
     var found = false;
     var inSym = payload.symbol;
+    var mySym;
+    var color;
 
     fxtbl.rows().every( function() {
-        var d = this.data();
-        var mySym = d[0];
+        mySym = this.data()[0];
         // logMessage("DEBUG", d);
         // logMessage("DEBUG", inSym + "-" + mySym);
         if (inSym === mySym) {
             // logMessage("DEBUG", "MATCHED");
-            //update
+            // update
             var newData = [ mySym, payload.buying, payload.selling];
             this.data( newData ).draw();
+            // color red for + green for -
+            color = (payload.direction === "+") ? "red" : "green";
+            $(this.node()).find('td:eq(1)').css('color', color);
+            $(this.node()).find('td:eq(2)').css('color', color);
             found = true;
             //break
             return false;

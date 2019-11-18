@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>FX demo</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html {
+      font-size: 62.5%;
+    }
+
+    body {
+      font-size: 1em;
+      background-color: #333333;
+      padding-top: 70px;
+      padding-bottom: 20px;
+    }
+    .button {
+      background-color: #333333;
+      color: #00CB95;
+      border: 2px solid #CCCCCC;
+      /* border-radius: 12px; */
+    }
+    .panel-heading {
+      color: #EEEEEE;
+      background: #777777;
+    }
+
+    .panel-body {
+      color: #EEEEEE;
+      background: #777777;
+    }
+
+    @media (max-width: 300px) {
+      html {
+        font-size: 70%;
+      }
+    }
+
+    @media (min-width: 400px) {
+      html {
+        font-size: 80%;
+      }
+    }
+
+    @media (min-width: 700px) {
+      html {
+        font-size: 120%;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      html {
+        font-size: 140%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="col-xs-12">
+      <div class="row">
+        <div class="col-xs-12">
+          <a href='http://www.solace.com' alt='Solace.com'><img src='./resources/logo.png' /></a>
+          <!-- TODO: Add FXrate text -->
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          Foreign Exchange Rates
+        </div>
+        <div class="panel-body collapse in fixed-height-panel">
+          <table class="table table-condensed  tableSection" id="fxrate-table">
+              <!-- table table-striped table-bordered -->
+            <thead>
+              <tr>
+                <th>Currencies</th>
+                <th>Buying</th>
+                <th>Selling</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AUD</td>
+                <td>37.1</td>
+                <td>37.7</td>
+              </tr>
+              <tr>
+                <td>SGD</td>
+                <td>100.2</td>
+                <td>100.8</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-12">
+      <div class="panel-body collapse in fixed-height-panel">
+        <span id="connectionStatus">Connection - Disconnected.</span>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Source Paho MQTT Client-->
+  <!-- <script src="paho-mqtt.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+
+  <!-- Javascript used for Bootstrap Theme -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+
+  <!-- Our FX demo Javascript -->
+  <script src="./fxdemo.js"></script>
+</body>
+
+</html>

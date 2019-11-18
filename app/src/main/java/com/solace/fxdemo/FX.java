@@ -203,7 +203,7 @@ public class FX {
             el.append("{");
             el.append("\"symbol\": \"").append(symbol).append("\", ");
             el.append("\"buying\": ").append(df_3dec.format(buy)).append(", ");
-            el.append("\"selling\": ").append(df_3dec.format(buy)).append(", ");
+            el.append("\"selling\": ").append(df_3dec.format(sell)).append(", ");
             el.append("\"direction\": \"").append(directionString).append("\"");
             el.append("}");
 

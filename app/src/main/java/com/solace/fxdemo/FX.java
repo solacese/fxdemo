@@ -125,7 +125,7 @@ public class FX {
 
                     Random random = new Random();
 
-                    double price, change, buySellSpreadPct, buyUSD, sellUSD = 0.0d;
+                    double price, change, buySellSpreadPct, buy, sell = 0.0d;
                     String directionString = "";
                     int directionInt = 0;
 
@@ -160,11 +160,11 @@ public class FX {
                             log.info("RAND: " + buySellSpreadPct);
 
                             // (6) calc buy/sell prices
-                            buyUSD = price - (price * buySellSpreadPct);
-                            sellUSD = price + (price * buySellSpreadPct);
+                            buy = price - (price * buySellSpreadPct);
+                            sell = price + (price * buySellSpreadPct);
 
                             // (7) Create the JSON element from the symbol, price and the up/down direction
-                            payload.append(createTradeUpdateElement(symbol, buyUSD, sellUSD));
+                            payload.append(createTradeUpdateElement(symbol, buy, sell));
 
                             // This version only apply random changes against a fixed starting price,
                             // it does not demonstrate subsequent price changes yet.
@@ -172,13 +172,13 @@ public class FX {
                             // TODO: once in a while, reset back the price back to original price from file
 
 
-                            log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buyUSD+"/"+sellUSD+"\tmessage="+payload);
+                            log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell+"\tmessage="+payload);
 
                             msg = payload.toString().trim();
 
                             // if not empty, send out
                             if ( ! msg.equalsIgnoreCase("")) {
-                                publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buyUSD+"/"+sellUSD, msg);
+                                publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell, msg);
                             }
                         }
                     }
@@ -194,7 +194,7 @@ public class FX {
 
         }
 
-        String createTradeUpdateElement(String symbol, double buyUSD, double sellUSD) {
+        String createTradeUpdateElement(String symbol, double buy, double sell) {
 
             StringBuffer el = new StringBuffer();
 
@@ -202,8 +202,8 @@ public class FX {
 
             el.append("{");
             el.append("\"symbol\": \"").append(symbol).append("\", ");
-            el.append("\"buying\": ").append(df_3dec.format(buyUSD)).append(", ");
-            el.append("\"selling\": ").append(df_3dec.format(sellUSD));
+            el.append("\"buying\": ").append(df_3dec.format(buy)).append(", ");
+            el.append("\"selling\": ").append(df_3dec.format(sell));
             el.append("}");
 
             return el.toString();

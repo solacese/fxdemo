@@ -27,10 +27,11 @@ cd <github-demo>
 
 ## Running the Demo
 
-To run the demo open:
+First, open the forex rates web page at https://sg.solace.com/fx/.
+Then, run the forex rate generator Java application as per below example. 
 
 ```
-commands to run the demo go here ...
+$ java -jar app/fxdemo-1.0.jar -h sgdemo1.solace.com -v FXstream -u <username> -p <password> -i app/config/symbols.properties -t fxrates
 ```
 
 ## Contributing

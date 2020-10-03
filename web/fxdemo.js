@@ -1,12 +1,19 @@
 
 var hostname = "sgdemo1.solace.com"
 // ,sgdemo2.solace.com"
+
+// Secured port options
+var path = '/wss'
+var tls = true;
 var port = "8443"
+// Non-secured port options
+//var path = '/ws'
+//var tls = false;
+//var port = "8000"
+
 var user = "default"
 var pass = "default"
 var topic = "fxrates/#"
-var path = '/wss'
-var tls = true;
 
 var qos = 1;
 var retain = false;

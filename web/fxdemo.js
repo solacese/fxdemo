@@ -1,5 +1,5 @@
-
-var hostname = "sgdemo1.solace.com"
+var hostname = "localhost"
+// var hostname = "sgdemo1.solace.com"
 // ,sgdemo2.solace.com"
 // var port = "8443"
 // var path = '/wss'
@@ -9,7 +9,8 @@ var path = '/ws'
 var tls = false;
 var user = "default"
 var pass = "default"
-var topic = "fxrates/#"
+var topicRoot = "fxrates/"
+var topic = ""
 
 var qos = 1;
 var retain = false;
@@ -35,8 +36,6 @@ $(document).ready( function () {
 } );
 
 
-
-
 // called when the client connects
 function onConnect(context) {
   // Once a connection has been made, make a subscription and send a message.
@@ -46,10 +45,23 @@ function onConnect(context) {
   statusSpan.innerHTML = "Connected to Solace PubSub+: " + connectionString + " with Client ID: " + context.invocationContext.clientId;
   connected = true;
 
-  client.subscribe(topic);
-  logMessage("INFO", "Subscribed to " + topic);
+  // client.subscribe(topic);
+  // logMessage("INFO", "Subscribed to " + topic);
 }
 
+// update subscription when watch list changes
+function updSubs(context) {
+  // console.log(context.checked + context.value);
+  topic = topicRoot + "usd/" + context.value + "/#" // TODO: still hardcoded USD
+  if (context.checked) {
+    client.subscribe(topic);
+    console.log("Subscribed to " + topic);
+  }
+  else {
+    client.unsubscribe(topic);
+    console.log("Unsubscribed from " + topic);
+  }
+}
 
 function onConnected(reconnect, uri) {
   // Once a connection has been made, make a subscription and send a message.

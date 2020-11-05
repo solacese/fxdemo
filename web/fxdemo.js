@@ -1,12 +1,15 @@
 
 var hostname = "sgdemo1.solace.com"
 // ,sgdemo2.solace.com"
-var port = "8443"
+// var port = "8443"
+// var path = '/wss'
+var tls = true;
+var port = "8000"
+var path = '/ws'
+var tls = false;
 var user = "default"
 var pass = "default"
 var topic = "fxrates/#"
-var path = '/wss'
-var tls = true;
 
 var qos = 1;
 var retain = false;

@@ -34,6 +34,9 @@ Then, run the forex rate generator Java application as per below example.
 $ java -jar app/fxdemo-1.0.jar -h sgdemo1.solace.com -v FXstream -u <username> -p <password> -i app/config/symbols.properties -t fxrates
 ```
 
+Play around with currency watch list which translates to individual subscriptions. This can be shown with the Console log and client subscriptions from Solace web UI.
+![sample demo](https://github.com/solacese/fxdemo/blob/master/howtodemo.png "How to demo")
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.

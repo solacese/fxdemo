@@ -322,13 +322,13 @@ public class FX {
         }
     }
 
-    public static class PrintingSessionEventHandler implements SessionEventHandler {
+    public class PrintingSessionEventHandler implements SessionEventHandler {
         public void handleEvent(SessionEventArgs event) {
             log.warn("Received Session Event "+event.getEvent()+ " with info "+event.getInfo());
         }
     }
 
-    public static class PrintingPubCallback implements JCSMPStreamingPublishEventHandler {
+    public class PrintingPubCallback implements JCSMPStreamingPublishEventHandler {
         public void handleError(String messageID, JCSMPException cause, long timestamp) {
             log.error("Error occurred for message: " + messageID);
             cause.printStackTrace();

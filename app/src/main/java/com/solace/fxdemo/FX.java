@@ -41,7 +41,6 @@ public class FX {
     public FX(String[] args) {
         if(this.parseArgs(args) ==1 || this.validateParams() ==1) {
             log.error(this.getCommonUsage());
-            System.out.println("asdf");
         }
         else {
             System.out.println("asdfasdfasdfasdf");

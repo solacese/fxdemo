@@ -27,18 +27,25 @@ public class FX {
 
     private static Properties symbolsList = null;
 
+    JCSMPSession session = null;
+    XMLMessageProducer prod = null;
+
     /**
      * @param args
      */
     public static void main(String[] args) {
 
-        FX fxPublisher = new FX();
-        if(fxPublisher.parseArgs(args) ==1 || fxPublisher.validateParams() ==1) {
-            log.error(fxPublisher.getCommonUsage());
+        FX fxPublisher = new FX(args);
+    }
+
+    public FX(String[] args) {
+        if(this.parseArgs(args) ==1 || this.validateParams() ==1) {
+            log.error(this.getCommonUsage());
+            System.out.println("asdf");
         }
         else {
-            FXStreamerThread hwPubThread = fxPublisher.new FXStreamerThread();
-            hwPubThread.start();
+            System.out.println("asdfasdfasdfasdf");
+            this.publishFX();
         }
     }
 
@@ -105,230 +112,214 @@ public class FX {
         return 0;
     }
 
-    /**
-     * Thread class to generate pixels to move every "n" seconds, where "n" is the Frequency In Seconds passed
-     * to the thread upon instantiation
-     */
-    class FXStreamerThread extends Thread {
+    private void publishFX() {
 
-        JCSMPSession session = null;
-        XMLMessageProducer prod = null;
+        while (true){
 
-        public void run() {
+            try {
 
-            while (true){
+                initSymbolsList();
+                initSolace();
 
-                try {
+                Random random = new Random();
 
-                    initSymbolsList();
-                    initSolace();
+                double price, change, buySellSpreadPct, buy, sell = 0.0d;
+                String directionString = "";
+                int directionInt = 0;
 
-                    Random random = new Random();
+                @SuppressWarnings("unchecked")
+                Enumeration<String> enumSymbols = (Enumeration<String>) symbolsList.propertyNames();
 
-                    double price, change, buySellSpreadPct, buy, sell = 0.0d;
-                    String directionString = "";
-                    int directionInt = 0;
+                while (enumSymbols.hasMoreElements())
+                {
+                    StringBuffer payload = new StringBuffer();
+                    String msg = null;
 
-                    @SuppressWarnings("unchecked")
-                    Enumeration<String> enumSymbols = (Enumeration<String>) symbolsList.propertyNames();
+                    // (1) Iterate through the symbols list
+                    String symbol = enumSymbols.nextElement();
 
-                    while (enumSymbols.hasMoreElements())
-                    {
-                        StringBuffer payload = new StringBuffer();
-                        String msg = null;
+                    // (2) Is this an symbol to get an update this time round?
+                    if (random.nextBoolean()) {
 
-                        // (1) Iterate through the symbols list
-                        String symbol = enumSymbols.nextElement();
+                        price = Double.parseDouble( symbolsList.getProperty(symbol) );
 
-                        // (2) Is this an symbol to get an update this time round?
-                        if (random.nextBoolean()) {
+                        // (3) Should the price go up or down?
+                        directionString = (random.nextBoolean()) ? "+" : "-";
+                        directionInt = Integer.parseInt(directionString + "1");
 
-                            price = Double.parseDouble( symbolsList.getProperty(symbol) );
+                        // (4) Work out the price change
+                        change = directionInt * random.nextDouble();
 
-                            // (3) Should the price go up or down?
-                            directionString = (random.nextBoolean()) ? "+" : "-";
-                            directionInt = Integer.parseInt(directionString + "1");
+                        // (5) change the mid price
+                        price += change;
 
-                            // (4) Work out the price change
-                            change = directionInt * random.nextDouble();
+                        // calc the spread - random from 0 to 10%
+                        buySellSpreadPct = (double) random.nextInt(5) / 100.0;
+                        log.debug("RAND: " + buySellSpreadPct);
 
-                            // (5) change the mid price
-                            price += change;
+                        // (6) calc buy/sell prices
+                        buy = price - (price * buySellSpreadPct);
+                        sell = price + (price * buySellSpreadPct);
 
-                            // calc the spread - random from 0 to 10%
-                            buySellSpreadPct = (double) random.nextInt(5) / 100.0;
-                            log.info("RAND: " + buySellSpreadPct);
+                        // (7) Create the JSON element from the symbol, price and the up/down direction
+                        payload.append(createTradeUpdateElement(symbol, buy, sell, directionString));
 
-                            // (6) calc buy/sell prices
-                            buy = price - (price * buySellSpreadPct);
-                            sell = price + (price * buySellSpreadPct);
-
-                            // (7) Create the JSON element from the symbol, price and the up/down direction
-                            payload.append(createTradeUpdateElement(symbol, buy, sell, directionString));
-
-                            // This version only apply random changes against a fixed starting price,
-                            // it does not demonstrate subsequent price changes yet.
-                            // TODO: save the new price back to symbolProps
-                            // TODO: once in a while, reset back the price back to original price from file
+                        // This version only apply random changes against a fixed starting price,
+                        // it does not demonstrate subsequent price changes yet.
+                        // TODO: save the new price back to symbolProps
+                        // TODO: once in a while, reset back the price back to original price from file
 
 
-                            log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell+"\tmessage="+payload);
+                        log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell+"\tmessage="+payload);
 
-                            msg = payload.toString().trim();
+                        msg = payload.toString().trim();
 
-                            // if not empty, send out
-                            if ( ! msg.equalsIgnoreCase("")) {
-                                publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell, msg);
-                            }
+                        // if not empty, send out
+                        if ( ! msg.equalsIgnoreCase("")) {
+                            publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell, msg);
                         }
                     }
+                }
 
-                    //log.error("Now sleeping for "+(int)(MDDStreamer.FREQUENCY_IN_SECONDS * 1000)+" milliseconds");
-                    sleep((int)(FX.FREQUENCY_IN_SECONDS * 1000));
+                //log.error("Now sleeping for "+(int)(MDDStreamer.FREQUENCY_IN_SECONDS * 1000)+" milliseconds");
+                Thread.sleep((int)(FX.FREQUENCY_IN_SECONDS * 1000));
 
 //                } catch (InterruptedException e) {
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        } // end of while(true)
+    } // end of method publishFX()
 
-        }
+    String createTradeUpdateElement(String symbol, double buy, double sell, String directionString) {
 
-        String createTradeUpdateElement(String symbol, double buy, double sell, String directionString) {
+        StringBuffer el = new StringBuffer();
 
-            StringBuffer el = new StringBuffer();
+        DecimalFormat df_3dec = new DecimalFormat("#.###");
 
-            DecimalFormat df_3dec = new DecimalFormat("#.###");
+        el.append("{");
+        el.append("\"symbol\": \"").append(symbol).append("\", ");
+        el.append("\"buying\": ").append(df_3dec.format(buy)).append(", ");
+        el.append("\"selling\": ").append(df_3dec.format(sell)).append(", ");
+        el.append("\"direction\": \"").append(directionString).append("\"");
+        el.append("}");
 
-            el.append("{");
-            el.append("\"symbol\": \"").append(symbol).append("\", ");
-            el.append("\"buying\": ").append(df_3dec.format(buy)).append(", ");
-            el.append("\"selling\": ").append(df_3dec.format(sell)).append(", ");
-            el.append("\"direction\": \"").append(directionString).append("\"");
-            el.append("}");
+        return el.toString();
+    }
 
-            return el.toString();
-        }
+    void publishToSolace(String topicString, String payload) {
 
-        void publishToSolace(String topicString, String payload) {
-
-            try {
-                if (session!=null && session.isClosed()) {
-                    log.warn("Session is not ready yet, waiting 5 seconds");
-                    Thread.sleep(5000);
-                    session.connect();
-                    publishToSolace (topicString, payload);
-                }
-                else if (session == null) {
-                    initSolace();
-                    publishToSolace (topicString, payload);
-                }
-                else {
-
-                    Topic topic = JCSMPFactory.onlyInstance().createTopic(topicString);
-
-                    log.info("MESSAGE: " + payload);
-
-                    TextMessage msg = prod.createTextMessage();
-                    msg.setText(payload);
-                    msg.setDeliveryMode(DeliveryMode.DIRECT);
-                    prod.send(msg, topic);
-                    Thread.sleep(100);
-
-                    //log.error("Sent message:"+msg.dump());
-                }
-            } catch (Exception ex) {
-                // Normally, we would differentiate the handling of various exceptions, but
-                // to keep this sample as simple as possible, we will handle all exceptions
-                // in the same way.
-                log.error("Encountered an Exception: " + ex.getMessage());
-                log.error(ex.getStackTrace());
-                finish();
-            }
-        }
-
-        void initSymbolsList() {
-
-            if (symbolsList != null) return;
-
-            log.info("About to initialise symbols list from file: " + SYMBOLS);
-
-            try (InputStream input = new FileInputStream(SYMBOLS)) {
-
-                // This version will be updated with new prices
-                symbolsList = new Properties();
-                symbolsList.load(input);
-
-                log.info("Loaded " + symbolsList.size() + " symbols from file.");
-
-            } catch (IOException ex) {
-                log.error("Encountered an Exception: " + ex.getMessage());
-                log.error(ex.getStackTrace());
-                finish();
-            }
-        }
-
-        void initSolace() {
-            log.debug("Initializing...");
-
-            if (session!=null && !session.isClosed()) return;
-
-            try {
-                log.info("About to create session.");
-
-                JCSMPProperties properties = new JCSMPProperties();
-
-                properties.setProperty(JCSMPProperties.HOST, SOLACE_IP_PORT);
-                properties.setProperty(JCSMPProperties.USERNAME, SOLACE_CLIENT_USERNAME);
-                properties.setProperty(JCSMPProperties.VPN_NAME, SOLACE_VPN);
-                properties.setProperty(JCSMPProperties.PASSWORD, SOLACE_PASSWORD);
-                properties.setBooleanProperty(JCSMPProperties.REAPPLY_SUBSCRIPTIONS, true);
-
-                // Channel properties
-                JCSMPChannelProperties chProperties = (JCSMPChannelProperties) properties
-                        .getProperty(JCSMPProperties.CLIENT_CHANNEL_PROPERTIES);
-
-                chProperties.setConnectRetries(10);
-                chProperties.setConnectTimeoutInMillis(1000);
-                chProperties.setReconnectRetries(2);
-                chProperties.setReconnectRetryWaitInMillis(3000);
-
-                session =  JCSMPFactory.onlyInstance().createSession(properties, null, new PrintingSessionEventHandler());
+        try {
+            if (session!=null && session.isClosed()) {
+                log.warn("Session is not ready yet, waiting 5 seconds");
+                Thread.sleep(5000);
                 session.connect();
-
-                // Acquire a message producer.
-                prod = session.getMessageProducer(new PrintingPubCallback());
-                log.info("Session:"+session.getSessionName());
-                log.info("Acquired message producer:"+prod);
-
-            } catch (Exception ex) {
-                log.error("Encountered an Exception: " + ex.getMessage());
-                log.error(ex.getStackTrace());
-                finish();
+                publishToSolace (topicString, payload);
             }
-        }
-
-        void finish() {
-
-            if (session != null) {
-                session.closeSession();
+            else if (session == null) {
+                initSolace();
+                publishToSolace (topicString, payload);
             }
-            System.exit(1);
-        }
+            else {
 
+                Topic topic = JCSMPFactory.onlyInstance().createTopic(topicString);
 
-        private Map<String, String> parseMap(String formattedMap) {
-            return Splitter.on(",").withKeyValueSeparator("=").split(formattedMap);
+                log.debug("MESSAGE: " + payload);
+
+                TextMessage msg = prod.createTextMessage();
+                msg.setText(payload);
+                msg.setDeliveryMode(DeliveryMode.DIRECT);
+                prod.send(msg, topic);
+                Thread.sleep(100);
+
+                //log.error("Sent message:"+msg.dump());
+            }
+        } catch (Exception ex) {
+            // Normally, we would differentiate the handling of various exceptions, but
+            // to keep this sample as simple as possible, we will handle all exceptions
+            // in the same way.
+            log.error("Encountered an Exception: " + ex.getMessage());
+            log.error(ex.getStackTrace());
+            finish();
         }
     }
 
-    public static class PrintingSessionEventHandler implements SessionEventHandler {
+    void initSymbolsList() {
+
+        if (symbolsList != null) return;
+
+        log.debug("About to initialise symbols list from file: " + SYMBOLS);
+
+        try (InputStream input = new FileInputStream(SYMBOLS)) {
+
+            // This version will be updated with new prices
+            symbolsList = new Properties();
+            symbolsList.load(input);
+
+            log.debug("Loaded " + symbolsList.size() + " symbols from file.");
+
+        } catch (IOException ex) {
+            log.error("Encountered an Exception: " + ex.getMessage());
+            log.error(ex.getStackTrace());
+            finish();
+        }
+    }
+
+    void initSolace() {
+        log.info("Initializing connection to Solace...");
+
+        if (session!=null && !session.isClosed()) return;
+
+        try {
+            log.info("About to create session.");
+
+            JCSMPProperties properties = new JCSMPProperties();
+
+            properties.setProperty(JCSMPProperties.HOST, SOLACE_IP_PORT);
+            properties.setProperty(JCSMPProperties.USERNAME, SOLACE_CLIENT_USERNAME);
+            properties.setProperty(JCSMPProperties.VPN_NAME, SOLACE_VPN);
+            properties.setProperty(JCSMPProperties.PASSWORD, SOLACE_PASSWORD);
+            properties.setBooleanProperty(JCSMPProperties.REAPPLY_SUBSCRIPTIONS, true);
+
+            // Channel properties
+            JCSMPChannelProperties chProperties = (JCSMPChannelProperties) properties
+                    .getProperty(JCSMPProperties.CLIENT_CHANNEL_PROPERTIES);
+
+            chProperties.setConnectRetries(10);
+            chProperties.setConnectTimeoutInMillis(1000);
+            chProperties.setReconnectRetries(2);
+            chProperties.setReconnectRetryWaitInMillis(3000);
+
+            session =  JCSMPFactory.onlyInstance().createSession(properties, null, new PrintingSessionEventHandler());
+            session.connect();
+
+            // Acquire a message producer.
+            prod = session.getMessageProducer(new PrintingPubCallback());
+            log.info("Session:"+session.getSessionName());
+            log.info("Acquired message producer:"+prod);
+
+        } catch (Exception ex) {
+            log.error("Encountered an Exception: " + ex.getMessage());
+            log.error(ex.getStackTrace());
+            finish();
+        }
+    }
+
+    void finish() {
+
+        if (session != null) {
+            session.closeSession();
+        }
+        System.exit(1);
+    }
+
+    public class PrintingSessionEventHandler implements SessionEventHandler {
         public void handleEvent(SessionEventArgs event) {
             log.warn("Received Session Event "+event.getEvent()+ " with info "+event.getInfo());
         }
     }
 
-    public static class PrintingPubCallback implements JCSMPStreamingPublishEventHandler {
+    public class PrintingPubCallback implements JCSMPStreamingPublishEventHandler {
         public void handleError(String messageID, JCSMPException cause, long timestamp) {
             log.error("Error occurred for message: " + messageID);
             cause.printStackTrace();

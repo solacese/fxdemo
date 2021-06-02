@@ -43,7 +43,6 @@ public class FX {
             log.error(this.getCommonUsage());
         }
         else {
-            System.out.println("asdfasdfasdfasdf");
             this.publishFX();
         }
     }

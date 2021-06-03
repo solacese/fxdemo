@@ -16,7 +16,7 @@ public class FX {
 
     private static final Logger log = LogManager.getLogger(FX.class);
 
-    private static double FREQUENCY_IN_SECONDS = 1;
+    private static double FREQUENCY_IN_SECONDS = 1; // default to 1 second
 
     private static String SOLACE_IP_PORT = null;
     private static String SOLACE_VPN = null;
@@ -43,7 +43,12 @@ public class FX {
             log.error(this.getCommonUsage());
         }
         else {
-            this.publishFX();
+            try {
+                this.publishFX();
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -55,7 +60,7 @@ public class FX {
         str += "\t -t ROOT TOPIC   Root topic name\n";
         str += "\t -i SYMBOLS      Properties file containing symbols\n";
         str += "\t[-p PASSWORD]    Authentication password\n";
-        str += "\t[-f FREQUENCY]   Frequency of publish in seconds (default: 5)\n";
+        str += "\t[-f FREQUENCY]   Frequency of publish in seconds (default: 1)\n";
         return str;
     }
 
@@ -103,89 +108,85 @@ public class FX {
     }
 
     private int validateParams(){
-        if (SOLACE_IP_PORT == null) return 1;
+        if (SOLACE_IP_PORT == null) SOLACE_IP_PORT = "localhost:55555";
         if (SOLACE_VPN == null) SOLACE_VPN = "default";
-        if (SOLACE_CLIENT_USERNAME == null) return 1;
-        if (SYMBOLS == null) return 1;
+        if (SOLACE_CLIENT_USERNAME == null) SOLACE_CLIENT_USERNAME = "default";
+        if (SOLACE_PASSWORD == null) SOLACE_PASSWORD = "default";
+        if (SYMBOLS == null) SYMBOLS = "./config/symbols.properties";
         return 0;
     }
 
-    private void publishFX() {
+    private void publishFX() throws Exception {
+
+        initSymbolsList();
+        initSolace();
+
+        Random random = new Random();
+
+        double price, change, buySellSpreadPct, buy, sell = 0.0d;
+        String directionString = "";
+        int directionInt = 0;
+
+        @SuppressWarnings("unchecked")
+        Enumeration<String> enumSymbols = null;
 
         while (true){
 
-            try {
+            enumSymbols = (Enumeration<String>) symbolsList.propertyNames();
+            while (enumSymbols.hasMoreElements())
+            {
+                StringBuffer payload = new StringBuffer();
+                String msg = null;
 
-                initSymbolsList();
-                initSolace();
+                // (1) Iterate through the symbols list
+                String symbol = enumSymbols.nextElement();
 
-                Random random = new Random();
+                // (2) Is this an symbol to get an update this time round?
+                if (random.nextBoolean()) {
 
-                double price, change, buySellSpreadPct, buy, sell = 0.0d;
-                String directionString = "";
-                int directionInt = 0;
+                    price = Double.parseDouble( symbolsList.getProperty(symbol) );
 
-                @SuppressWarnings("unchecked")
-                Enumeration<String> enumSymbols = (Enumeration<String>) symbolsList.propertyNames();
+                    // (3) Should the price go up or down?
+                    directionString = (random.nextBoolean()) ? "+" : "-";
+                    directionInt = Integer.parseInt(directionString + "1");
 
-                while (enumSymbols.hasMoreElements())
-                {
-                    StringBuffer payload = new StringBuffer();
-                    String msg = null;
+                    // (4) Work out the price change
+                    change = directionInt * random.nextDouble();
 
-                    // (1) Iterate through the symbols list
-                    String symbol = enumSymbols.nextElement();
+                    // (5) change the mid price
+                    price += change;
 
-                    // (2) Is this an symbol to get an update this time round?
-                    if (random.nextBoolean()) {
+                    // calc the spread - random from 0 to 10%
+                    buySellSpreadPct = (double) random.nextInt(5) / 100.0;
+                    log.debug("RAND: " + buySellSpreadPct);
 
-                        price = Double.parseDouble( symbolsList.getProperty(symbol) );
+                    // (6) calc buy/sell prices
+                    buy = price - (price * buySellSpreadPct);
+                    sell = price + (price * buySellSpreadPct);
 
-                        // (3) Should the price go up or down?
-                        directionString = (random.nextBoolean()) ? "+" : "-";
-                        directionInt = Integer.parseInt(directionString + "1");
+                    // (7) Create the JSON element from the symbol, price and the up/down direction
+                    payload.append(createTradeUpdateElement(symbol, buy, sell, directionString));
 
-                        // (4) Work out the price change
-                        change = directionInt * random.nextDouble();
-
-                        // (5) change the mid price
-                        price += change;
-
-                        // calc the spread - random from 0 to 10%
-                        buySellSpreadPct = (double) random.nextInt(5) / 100.0;
-                        log.debug("RAND: " + buySellSpreadPct);
-
-                        // (6) calc buy/sell prices
-                        buy = price - (price * buySellSpreadPct);
-                        sell = price + (price * buySellSpreadPct);
-
-                        // (7) Create the JSON element from the symbol, price and the up/down direction
-                        payload.append(createTradeUpdateElement(symbol, buy, sell, directionString));
-
-                        // This version only apply random changes against a fixed starting price,
-                        // it does not demonstrate subsequent price changes yet.
-                        // TODO: save the new price back to symbolProps
-                        // TODO: once in a while, reset back the price back to original price from file
+                    // This version only apply random changes against a fixed starting price,
+                    // it does not demonstrate subsequent price changes yet.
+                    // TODO: save the new price back to symbolProps
+                    // TODO: once in a while, reset back the price back to original price from file
 
 
-                        log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell+"\tmessage="+payload);
+                    log.debug("topicString="+ ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell+"\tmessage="+payload);
 
-                        msg = payload.toString().trim();
+                    msg = payload.toString().trim();
 
-                        // if not empty, send out
-                        if ( ! msg.equalsIgnoreCase("")) {
-                            publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell, msg);
-                        }
+                    // if not empty, send out
+                    if ( ! msg.equalsIgnoreCase("")) {
+                        publishToSolace(ROOT_TOPIC +"/usd/"+symbol.toLowerCase()+"/"+buy+"/"+sell, msg);
                     }
                 }
-
-                //log.error("Now sleeping for "+(int)(MDDStreamer.FREQUENCY_IN_SECONDS * 1000)+" milliseconds");
-                Thread.sleep((int)(FX.FREQUENCY_IN_SECONDS * 1000));
-
-//                } catch (InterruptedException e) {
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
+            //log.error("Now sleeping for "+(int)(MDDStreamer.FREQUENCY_IN_SECONDS * 1000)+" milliseconds");
+            Thread.sleep((int)(FX.FREQUENCY_IN_SECONDS * 1000));
+
         } // end of while(true)
     } // end of method publishFX()
 

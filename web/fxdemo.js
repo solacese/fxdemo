@@ -1,20 +1,4 @@
-var hostname = "localhost"
-// var hostname = "sgdemo1.solace.com"
-// ,sgdemo2.solace.com"
-
-// Secured port options
-var path = '/wss'
-var tls = true;
-var port = "8443"
-// Non-secured port options
-//var path = '/ws'
-//var tls = false;
-//var port = "8000"
-
-var user = "default"
-var pass = "default"
-var topic = "fxrates/#"
-
+var topic = "";
 var qos = 1;
 var retain = false;
 var timeout = 60;
@@ -55,7 +39,7 @@ function onConnect(context) {
 // update subscription when watch list changes
 function updSubs(context) {
   // console.log(context.checked + context.value);
-  topic = topicRoot + "usd/" + context.value + "/#" // TODO: still hardcoded USD
+  topic = solconfig.topicRoot + "usd/" + context.value + "/#" // TODO: still hardcoded USD
   if (context.checked) {
     client.subscribe(topic);
     console.log("Subscribed to " + topic);
@@ -139,8 +123,8 @@ function logMessage(type, ...content) {
 
 function connect() {
 
-  client = new Paho.MQTT.Client(hostname, Number(port), path, clientId);
-  logMessage("INFO", "Connecting to Server: [Host: ", hostname, ", Port: ", port, ", Path: ", client.path, ", ID: ", clientId, "]");
+  client = new Paho.MQTT.Client(solconfig.hostname, Number(solconfig.port), solconfig.path, clientId);
+  logMessage("INFO", "Connecting to Server: [Host: ", solconfig.hostname, ", Port: ", solconfig.port, ", Path: ", client.path, ", ID: ", clientId, "]");
 
   // set callback handlers
   client.onConnectionLost = onConnectionLost;
@@ -148,21 +132,21 @@ function connect() {
   client.onConnected = onConnected;
 
   var options = {
-    invocationContext: { host: hostname, port: port, path: client.path, clientId: clientId },
+    invocationContext: { host: solconfig.hostname, port: solconfig.port, path: client.path, clientId: clientId },
     timeout: timeout,
     keepAliveInterval: keepAlive,
     cleanSession: cleanSession,
-    useSSL: tls,
+    useSSL: solconfig.tls,
     onSuccess: onConnect,
     onFailure: onFail
   };
 
-  if (user.length > 0) {
-    options.userName = user;
+  if (solconfig.user.length > 0) {
+    options.userName = solconfig.user;
   }
 
-  if (pass.length > 0) {
-    options.password = pass;
+  if (solconfig.pass.length > 0) {
+    options.password = solconfig.pass;
   }
 
   // connect the client

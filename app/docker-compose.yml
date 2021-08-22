@@ -1,0 +1,13 @@
+version: "3.9"
+   
+services:
+  fxdemo-app:
+    image: arih1299/fxdemo-app:1.0
+    environment:
+      - HOST=192.168.42.110,192.168.42.120
+      - VPN=default
+      - USER=default
+      - PASSWORD=default
+      - ROOT_TOPIC=fxrates
+      - SYMBOLS=config/symbols.properties
+      - FREQUENCY=5

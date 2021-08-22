@@ -28,9 +28,10 @@ cd <github-demo>
 ## Running the Demo
 
 First, open the forex rates web page at https://sg.solace.com/fx/.
-Then, run the forex rate generator Java application as per below example. 
+Then, run the forex rate generator Java application as per below examples with Docker or locally. 
 
 ```
+$ docker run --name fxdemo1.0 --env HOST=hostname:55555 --env VPN=default --env USER=default --env PASSWORD=default --env ROOT_TOPIC=fxrates --env SYMBOLS=config/symbols.properties --env FREQUENCY=1 arih1299/fxdemo-app:1.0
 $ java -jar app/fxdemo-1.0.jar -h sgdemo1.solace.com -v FXstream -u <username> -p <password> -i app/config/symbols.properties -t fxrates
 ```
 

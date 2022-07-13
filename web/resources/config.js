@@ -1,9 +1,9 @@
 solconfig =  {
-    hostname: 'sgdemo1.solace.com',
+    hostname: 'hostname',
     port: '8443',
     path: '/wss',
     tls: true,
-    user: 'default',
-    pass: 'default',
+    user: '',
+    pass: '',
     topicRoot: 'fxrates/'
 }
